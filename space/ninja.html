@@ -1,0 +1,454 @@
+<html>
+	<head>
+		<title>
+			Ninjas
+		</title>
+
+		<style id="style1" type="text/css">
+
+			body{
+				background-image: url(images/ninja-background.jpg);
+				repeat-y: no;
+				repeat-x: no;
+			}
+		</style>
+		<script type="text/javascript" language="JavaScript">
+			var iFakeBad = randNum(1, 7);
+			iFakeBad = 0
+			var iLevel = 1;
+			var iLives = 3;
+			var iFlights = 1;
+			var bFakeFound = false;
+			var aImages = new Array;
+			var iBadMoveID = 0;
+			var iBulletMoveID = 0;
+			var aShots = [1,2,3,4,5];
+			var iBads = 7;
+			var ShipElement;
+			var deltaY;
+			var deltaX;
+			var shipY;
+			var shipX;
+			var BadMinSpeed = 5;
+			var BadMaxSpeed = 20;
+			
+			var imageDir = "images/";
+
+			aImages[aImages.length] = new imageItem(imageDir + "ninja-right.png");
+			aImages[aImages.length] = new imageItem(imageDir + "ninja-left.png");
+			aImages[aImages.length] = new imageItem(imageDir + "ninja-collision.png");
+			aImages[aImages.length] = new imageItem(imageDir + "badninja-left.png");
+			aImages[aImages.length] = new imageItem(imageDir + "badninja-collision.png");
+			
+			function imageItem(image_location) 
+			{
+				this.image_item = new Image();
+				this.image_item.src = image_location;
+			}
+			
+			function get_ImageItemLocation(imageObj) {
+				return(imageObj.image_item.src)
+			}
+			
+			function showStatus(strDisplay)
+			{
+				var StatusElement = document.getElementById("Status");
+				if (strDisplay != "")
+				{
+					StatusElement.innerHTML = strDisplay;
+					StatusElement.style.visibility = 'visible';
+				}
+				else
+				{
+					StatusElement.style.visibility = 'hidden';
+				}
+			}
+			function ResetPage()
+			{
+				iFlights = 0;
+				iBads = 7;
+				iLevel += 1;
+				BadMinSpeed += 3;
+				BadMaxSpeed += 6;
+				for ( var i = 1; BadElem = document.getElementById("Bad" + i); i++)
+				{
+					switch(i) {
+						case 1:
+							{
+								BadElem.style.left = 100;
+								break;	
+							}
+						case 2:
+							{
+								BadElem.style.left = 200;
+								break;	
+							}
+						case 3:
+							{
+								BadElem.style.left = 400;
+								break;	
+							}
+						case 4:
+							{
+								BadElem.style.left = 400;
+								break;	
+							}
+						case 5:
+							{
+								BadElem.style.left = 700;
+								break;	
+							}
+						case 6:
+							{
+								BadElem.style.left = 800;
+								break;	
+							}
+						case 7:
+							{
+								BadElem.style.left = 900;
+								break;	
+							}
+					}
+					BadElem.src = get_ImageItemLocation(aImages[3]);
+					BadElem.style.visibility = 'visible';
+					BadElem.xMove = false;
+				}
+				for (var j = 1; BulletElem = document.getElementById("Bullet" + j); j++)
+				{
+					reloadBullet(BulletElem);
+				}
+				resetShip();
+				showStatus("Level " + iLevel);
+				setTimeout("showStatus(\'\');",2000);
+				
+			}
+			function moveHandler(event)
+			{
+				if (shipX != event.clientX || shipY != event.clientY){
+					
+					if ((event.clientX - deltaX) > (shipX)){
+						ShipElement.src = get_ImageItemLocation(aImages[0]);
+					} else if ((event.clientX - deltaX) < (shipX)){
+						ShipElement.src = get_ImageItemLocation(aImages[1]);
+					}
+					shipY = event.clientY - deltaY;
+					shipX = event.clientX - deltaX;
+					
+					if (shipY < 0) {
+						shipY = 0
+					}
+					if (shipX < 0) {
+						shipX = 0
+					}
+					
+					ShipElement.style.top = shipY;
+					ShipElement.style.left = shipX;
+				}
+				if(event.stopPropagation){
+					event.stopPropagation();	
+				} else {
+					event.cancelBubble = true;
+				}
+				return false;
+			}
+			
+			function upHandler(event)
+			{
+				if (!event || event.button != 2)
+				{
+					if (document.removeEventListener){
+						document.removeEventListener("mousemove", moveHandler, true);
+						document.removeEventListener("mouseup", upHandler, true);
+					} else {
+						document.detachEvent("onmousemove", moveHandler);
+						document.detachEvent("onmouseup", upHandler);
+					}
+					if (event)
+					{
+						if(event.stopPropagation)
+						{
+							event.stopPropagation();	
+						} else {
+							event.cancelBubble = true;
+						}
+					}
+					clearInterval(iBadMoveID);
+					clearInterval(iBulletMoveID);
+					iBadMoveID = 0;
+					iBulletMoveID = 0;
+				}
+				return false;
+			}
+			function ShipBadCollision()
+			{
+				var x = parseInt(ShipElement.style.left);
+				var y = parseInt(ShipElement.style.top);
+				for (var iBadIndex = 1; BadElem = document.getElementById('Bad' + iBadIndex); iBadIndex++)
+				{
+					var asteroidY = parseInt(BadElem.style.top);
+					var asteroidX = parseInt(BadElem.style.left);
+					var rA = 45;
+					
+					if (!BadElem.style.visibility || BadElem.style.visibility == 'visible')
+					{
+						if ((y > (asteroidY - rA) && y < (asteroidY +rA) && x> (asteroidX -rA) && x< (asteroidX + rA)) && !bFakeFound) 
+						{
+							upHandler(null);
+							if (iBadIndex == iFakeBad) 
+							{
+							alert("Fake asteroid found!\n" + iFlights + " tries");
+							iFakeBad = randNum(1, 7);
+							iFlights = 0;
+							
+							} 
+							else 
+							{
+							ShipElement.src = get_ImageItemLocation(aImages[2]);
+							
+							};
+							iLives -= 1;
+							return true;
+							break;
+						}
+					}	
+				}
+				return false;
+			}
+			function BulletBadCollision()
+			{
+				for (var iBulletIndex = 1; BulletElem = document.getElementById("Bullet" + iBulletIndex); iBulletIndex++)
+				{
+					if (!BulletElem.style.visibility || BulletElem.style.visibility == 'visible')
+					{
+						var BulletCenterY = parseInt(BulletElem.style.top) + parseInt(BulletElem.style.height);
+						var BulletCenterX = parseInt(BulletElem.style.left) + parseInt(BulletElem.style.width);
+
+						for (var iBadIndex = 1; BadElem = document.getElementById("Bad" + iBadIndex); iBadIndex++)
+						{
+							if (!BadElem.style.visibility || BadElem.style.visibility == 'visible')
+							{
+								if (BulletCenterY >= parseInt(BadElem.style.top))
+								{
+									if (BulletCenterY <= (parseInt(BadElem.style.top) +parseInt(BadElem.style.height)))
+									{
+										if ( (BulletElem.speed > 0 && BulletCenterX >= parseInt(BadElem.style.left)) || (BulletElem.speed < 0 && BulletCenterX <= (parseInt(BadElem.style.left) + parseInt(BadElem.style.width))))
+										{
+											if ( (BulletElem.speed > 0 && BulletCenterX <= (parseInt(BadElem.style.left) + parseInt(BadElem.style.width))) || (BulletElem.speed < 0 && BulletCenterX >= parseInt(BadElem.style.left)))
+											{
+												if (BadElem.src.search(/badninja-collision.png/i) != -1)
+												{
+													BadElem.style.visibility = 'hidden';
+												}
+												else
+												{
+												BadElem.src = get_ImageItemLocation(aImages[4]);
+												setTimeout("removeBad(\'" + BadElem.id+ "\');", 1000);
+												}
+												
+												
+												reloadBullet(BulletElem)
+											}
+										}
+									}
+								}
+							}
+						}	
+					}
+				}
+				return false;
+			}
+			
+			function FireGun() 
+			{
+				if (iBadMoveID != 0)
+				{
+					if (aShots.length > 0) 
+					{
+						var bullet = document.getElementById("Bullet" + aShots.pop());
+						var iSpeed = 20;
+						var iStartX = parseInt(ShipElement.style.left) + parseInt(ShipElement.style.width);
+						var iStartY = parseInt(ShipElement.style.top) + parseInt(ShipElement.style.height)/4.;
+						if (ShipElement.src.search(/left/i) != -1) 
+						{
+							iSpeed = -20;
+							iStartX = parseInt(ShipElement.style.left);
+						}
+						bullet.style.visibility = 'visible';
+						bullet.speed = iSpeed
+						bullet.style.top = iStartY;
+						bullet.style.left = iStartX;
+						bullet.style.visibility = 'visible';
+					}
+				}
+			}		
+			function removeBad(id)
+			{
+				var BadElem = document.getElementById(id);
+				
+				BadElem.style.visibility = 'hidden';
+				iBads -= 1;
+				if (iBads < 1) {
+					var strMessage = "Congratulations!<br>" + iFlights + " ninja to complete level!"
+					showStatus(strMessage)
+					setTimeout("ResetPage();", 2000);
+				}
+			}					
+			function reloadBullet(BulletElem)
+			{
+				BulletElem.style.visibility = 'hidden';
+				BulletElem.speed = 0;
+				aShots.push(BulletElem.id.substr(BulletElem.id.length-1,1));
+			}
+			function MoveBullets()
+			{
+				var newLeft = 0;
+				var xLimit = 0;
+				for (var i = 5; BulletElem = document.getElementById('Bullet' + i); i--)
+				{
+					if (BulletElem.style.visibility == 'visible')
+					{
+						newLeft = parseInt(BulletElem.style.left)+BulletElem.speed;
+						if (BulletElem.speed > 0 )
+						{
+							xLimit = window.screen.width;
+							if (newLeft > xLimit)
+							{
+								reloadBullet(BulletElem)
+							}
+						}
+						else
+						{
+							xLimit = 0;
+							if (newLeft < xLimit)
+							{
+								reloadBullet(BulletElem);
+							}
+						}
+						BulletElem.style.left = newLeft;
+					}
+				}
+				BulletBadCollision();
+			}
+			function keyHandler(e)
+			{
+				FireGun();
+			}
+			function resetShip(offset)
+			{
+				if (offset == null)
+					offset = 0;
+				if (iLives >= 0)
+				{
+					ShipElement.style.top = (200 + offset);
+					ShipElement.style.left = (100 + offset);
+					ShipElement.src = get_ImageItemLocation(aImages[0]);
+					bFakeFound = false;
+					var eminentCollision = ShipBadCollision()
+					if (eminentCollision)
+					{
+						resetShip(offset + 100);
+						iLives +=1;
+						return false;
+						
+					}
+					iFlights += 1;
+				}
+				else
+				{
+					showStatus("Game Over<br>Level " + iLevel);
+					setTimeout("document.location = document.location;", 3000);
+				}
+			}
+			
+			function MoveBads()
+			{
+				var newLeft = 0;
+				var newTop = 0;
+				for (var i = 1; elem = document.getElementById('Bad' + i); i++)
+				{
+					if (!elem.style.visibility || elem.style.visibility == 'visible')
+					{
+						if (!elem.xMove)
+							elem.xMove = randNum(BadMinSpeed, BadMaxSpeed);
+						newLeft = parseInt(elem.style.left)-elem.xMove;
+						iLeftOffset = parseInt(elem.style.width);
+						newTop = parseInt(elem.style.top);
+						iTopOffset = parseInt(elem.style.height);
+						if ((newLeft + iLeftOffset) < 1) 
+						{
+							newLeft = window.screen.width;
+						}
+						if ((newTop + iTopOffset) < 1)
+						{
+							newTop = window.screen.height;
+						}
+						elem.style.left = newLeft;
+						elem.style.top = newTop;
+					}
+				}
+				var crash = ShipBadCollision()
+				if (crash)
+				{
+					setTimeout("resetShip()",2000);
+				}
+			}
+			function LiftOff(event)
+			{
+				ShipElement = document.getElementById('Rocketship');
+				if (event.button != 2)
+				{
+					var x = 0;
+					var y = 0;
+					if (iBadMoveID == 0)
+						iBadMoveID = setInterval("MoveBads();",62)
+					if (iBulletMoveID == 0)
+						iBulletMoveID = setInterval("MoveBullets();",62);				
+					deltaX = event.clientX - parseInt(ShipElement.style.left);
+					deltaY = event.clientY - parseInt(ShipElement.style.top);
+					
+					if(document.addEventListener){
+						document.addEventListener("mousemove", moveHandler, true);
+						document.addEventListener("mouseup", upHandler, true);	
+						document.addEventListener("keypress",keyHandler, true);
+					} else {
+						document.attachEvent("onmousemove", moveHandler);
+						document.attachEvent("onmouseup", upHandler);
+						document.attachEvent("onkeypress", keyHandler);
+					}
+					if(event.stopPropagation)
+							event.stopPropagation();	
+						else
+							event.cancelBubble = true;
+					if (event.preventDefault){
+						event.preventDefault();
+					} else {
+						event.returnValue = false;
+					}
+				}
+			}
+			function randNum(x, y) 
+			{
+				var range = y - x + 1;
+				return Math.floor(Math.random() * range) + x;
+			}
+			
+		</script>
+	</head>
+	<body width="100%" height="100%" onload="setTimeout('showStatus(\'\')',2000);" oncontextmenu="FireGun();return false;">
+		<img style="position:absolute; top:200px; left:100px; z-index:1; width:40px; height:54px;" id="Rocketship" name="Rocketship" class="Rocketship" onMouseDown="LiftOff(event);" src="images/ninja-right.png">
+		<img id="Bad1" name="Bad" class="Bad" style="position:absolute; top:50px; left:100px; z-index:2; width:40px; height:74px;" src="images/badninja-left.png">
+		<img id="Bad2" name="Bad" class="Bad" style="position:absolute; top:250px; left:200px; z-index:0; width:40px; height:74px;" src="images/badninja-left.png">
+		<img id="Bad3" name="Bad" class="Bad" style="position:absolute; top:100px; left:400px; z-index:0; width:40px; height:74px;" src="images/badninja-left.png">
+		<img id="Bad4" name="Bad" class="Bad" style="position:absolute; top:500px; left:400px; z-index:2; width:40px; height:74px;" src="images/badninja-left.png">
+		<img id="Bad5" name="Bad" class="Bad" style="position:absolute; top:350px; left:700px; z-index:0; width:40px; height:74px;" src="images/badninja-left.png">
+		<img id="Bad6" name="Bad" class="Bad" style="position:absolute; top:200px; left:800px; z-index:2; width:40px; height:74px;" src="images/badninja-left.png">
+		<img id="Bad7" name="Bad" class="Bad" style="position:absolute; top:500px; left:900px; z-index:0; width:40px; height:74px;" src="images/badninja-left.png">
+		<img id="Bullet1" name="Bad" class="Bad" style="visibility:hidden;position:absolute; top:0px; left:0px; z-index:0; width:20px; height:20px;" src="images/ninja-star.png">
+		<img id="Bullet2" name="Bad" class="Bad" style="visibility:hidden;position:absolute; top:0px; left:0px; z-index:0; width:20px; height:20px;" src="images/ninja-star.png">
+		<img id="Bullet3" name="Bad" class="Bad" style="visibility:hidden;position:absolute; top:0px; left:0px; z-index:0; width:20px; height:20px;" src="images/ninja-star.png">
+		<img id="Bullet4" name="Bad" class="Bad" style="visibility:hidden;position:absolute; top:0px; left:0px; z-index:0; width:20px; height:20px;" src="images/ninja-star.png">
+		<img id="Bullet5" name="Bad" class="Bad" style="visibility:hidden;position:absolute; top:0px; left:0px; z-index:0;width:20px;height:20px;" src="images/ninja-star.png">
+		<div id="Status" style="z-Index:1;position:absolute;
+visibility:visible;top:45%;left:40%;background-color:white;color:black;font-size:26pt;">Move the ninja around by dragging it.  Get all the red ninjas to advance to the next level.<br><br>Left Click and drag to move<br>Right Click to shoot.</div>
+	</body>
+</html>
